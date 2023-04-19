@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="mb-3">
+            <label for="json" class="form-label">在下面输入 json</label>
+            <textarea class="form-control" id="jsonId" rows="12" placeholder="在这里输入json字符串"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="javascript:prettyJson()">格式化 json</button>
+        <button class="btn btn-primary" onclick="javascript:zipJson()">压缩 json</button>
+
+        <button class="btn btn-primary" onclick="javascript:jsonTosql()">json 转 create table sql</button>
+        <button class="btn btn-primary" onclick="javascript:showDemo()">演示</button>
+
+        <button class="btn btn-primary" onclick="javascript:doClear()">清空</button>
+
+        <div class="mb-3">
+            <label for="sql" class="form-label">在下面生成结果</label>
+            <textarea class="form-control" id="sql" rows="12"></textarea>
+        </div>
+    </div>
+
+
+    <script>
+        console.log("本方法参考自 csdn 博主叶常落")
+        console.log("https://blog.csdn.net/lineuman/")
+        console.log("同时欢迎关注微信公众号 叶常落")
+
+        function doClear() {
+            document.getElementById("jsonId").value = ""
+            document.getElementById("sql").value = ""
+        }
+
+        function showDemo() {
+            document.getElementById("jsonId").value = `{
+     "type": "blog",
+     "formatTime": "2021.03.25",
+     "title": "windows 下的终端工具和产品力",
+     "description": "终端工具产品力:1.和 linux、unix 基本命令兼容 2.字体大小可以设置，最好按键 + 滚轮可以控制字体大小",
+     "hasOriginal": true,
+     "diggCount": 1000,
+     "commentCount": 0,
+     "postTime": 1616667998000,
+     "createTime": 1616666971000,
+     "url": "https://blog.csdn.net/lineuman/article/details/115215112",
+     "articleType": 1,
+     "viewCount": 84,
+     "rtype": "article"
+}`
+            document.getElementById("sql").value = ""
+            setTimeout(jsonTosql, 500)
+
+        }
+
+        function zipJson() {
+            text = document.getElementById("jsonId").value;
+            text = text.split("\n").join(" ");
+            var t = [];
+            var inString = false;
+            for (var i = 0, len = text.length; i < len; i++) {
+                var c = text.charAt(i);
+                if (inString && c === inString) {
+                    if (text.charAt(i - 1) !== '\\') {
+                        inString = false;
+                    }
+                } else if (!inString && (c === '"' || c === "'")) {
+                    inString = c;
+                } else if (!inString && (c === ' ' || c === "\t")) {
+                    c = '';
+                }
+                t.push(c);
+            }
+            text = t.join('');
+            document.getElementById("jsonId").value = text;
+        }
+
+        function prettyJson() {
+            try {
+                let j = document.getElementById("jsonId").value;
+                jObj = JSON.parse(j)
+                j2 = JSON.stringify(jObj, null, 5)
+                document.getElementById("jsonId").value = j2;
+            } catch {
+                alert('未知错误')
+            }
+        }
+
+        function jsonTosql() {
+            let j = document.getElementById("jsonId").value;
+            if (j) {
+
+                var sqlText = j;
+
+                var data = JSON.parse(sqlText);
+                console.log(data)
+                var result = "";
+
+                result += "CREATE TABLE your_table_name (\n";
+                var fflag = 1;
+
+                Object.entries(data).forEach(([i, n]) => {
+                    console.log(`${i}: ${n}`);
+                    if (typeof(n) == 'string') {
+                        result += "  `" + i + "` TEXT, \n"
+                    }
+                    if (typeof(n) == 'number') {
+                        if ((n + "").indexOf(".") > -1)
+                            result += "  `" + i + "` FLOAT, \n";
+                        else
+                            result += "  `" + i + "` INT, \n"
+                    }
+                    if (typeof(n) == 'boolean') {
+                        result += "  `" + i + "` BOOLEAN, \n"
+                    }
+                    if (i == "id")
+                        fflag = 0;
+                });
+
+
+
+                if (fflag)
+                    result += "  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增主键',\n";
+
+                result += "  PRIMARY KEY (id)\n" +
+                    ");";
+
+                console.log(result)
+                document.getElementById("sql").value = result
+            }
+        }
+    </script>
+
+</body>
+
+</html>
